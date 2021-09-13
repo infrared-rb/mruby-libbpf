@@ -59,6 +59,7 @@ MRuby::Gem::Specification.new('mruby-libbpf') do |spec|
         e['OBJDIR'] = objs_dir(build)
         e['DESTDIR'] = File.dirname(lib_a(build))
         e['CFLAGS'] = '-g -O2 -Werror -Wall -fPIC'
+        # e['LDFLAGS'] = '-lelf'
 
         run_command e, "make"
         run_command e, "make install"
@@ -70,7 +71,7 @@ MRuby::Gem::Specification.new('mruby-libbpf') do |spec|
 
     self.cc.include_paths << File.dirname(header(build))
     self.linker.library_paths << File.dirname(lib_a(build))
-    self.linker.libraries << 'bpf'
+    self.linker.libraries << 'bpf' << 'z' << 'elf'
   end
 
   spec.bundle_libbpf
