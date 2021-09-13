@@ -1,0 +1,7 @@
+name: mruby-libbpf
+description: Libbpf class
+author: Uchio Kondo
+website: https://github.com/udzura/mruby-libbpf
+protocol: git
+repository: https://github.com/udzura/mruby-libbpf.git
+license: MIT
