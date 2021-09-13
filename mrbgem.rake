@@ -60,13 +60,8 @@ MRuby::Gem::Specification.new('mruby-libbpf') do |spec|
         e['DESTDIR'] = File.dirname(lib_a(build))
         e['CFLAGS'] = '-g -O2 -Werror -Wall -fPIC'
 
-        begin
-          run_command e, "make"
-          run_command e, "make install"
-        rescue => e
-          require 'irb'
-          binding.irb
-        end
+        run_command e, "make"
+        run_command e, "make install"
       end
     end
 
