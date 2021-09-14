@@ -28,7 +28,6 @@ static const struct mrb_data_type mrb_libbpf_map_data_type = {
 };
 
 mrb_value mrb_libbpf_map_generate(mrb_state *mrb,
-                                  int fd,
                                   int key_size,
                                   int value_size,
                                   enum bpf_map_type type,
