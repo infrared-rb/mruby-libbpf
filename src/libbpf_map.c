@@ -53,6 +53,36 @@ mrb_value mrb_libbpf_map_generate(mrb_state *mrb,
 
 const __u32 get_first = -2;
 
+#define MAX_SLOTS	15
+struct hist {
+  __u32 slots[MAX_SLOTS];
+};
+
+mrb_value mrb_libbpf_map__debug(mrb_state *mrb, mrb_value self)
+{
+  if(DATA_PTR(self) == NULL)
+    mrb_sys_fail(mrb, "Invalidly initialized map");
+
+  //struct bpf_map *hists = ((mrb_libbpf_map_data *)DATA_PTR(self))->ptr;
+  int fd = ((mrb_libbpf_map_data *)DATA_PTR(self))->fd;
+  __u32 lookup_key = -2, next_key;
+  struct hist h;
+
+  while (!bpf_map_get_next_key(fd, &lookup_key, &next_key)) {
+    int err = bpf_map_lookup_elem(fd, &next_key, &h);
+    if (err < 0) {
+      fprintf(stderr, "failed to lookup hist: %d\n", err);
+      mrb_sys_fail(mrb, "Error");
+    }
+    printf("pid: %d\n", next_key);
+    for(int i = 0; i < MAX_SLOTS; i++)
+      printf("\tvalue: hist[%d] = %d\n", i, h.slots[i]);
+
+    lookup_key = next_key;
+  }
+  return mrb_true_value();
+}
+
 mrb_value mrb_libbpf_map_next_key(mrb_state *mrb, mrb_value self)
 {
   if(DATA_PTR(self) == NULL)
@@ -64,7 +94,7 @@ mrb_value mrb_libbpf_map_next_key(mrb_state *mrb, mrb_value self)
   const char* key;
   char* nextkey;
   mrb_int keylen;
-  mrb_get_args(mrb, "s", &key, &keylen);
+  mrb_get_args(mrb, "s!", &key, &keylen);
   if (key == NULL && keylen == 0) {
     key = (void *)(&get_first);
     keylen = klen;
@@ -73,10 +103,14 @@ mrb_value mrb_libbpf_map_next_key(mrb_state *mrb, mrb_value self)
     mrb_sys_fail(mrb, "keysize unmatch");
   }
 
-  if(!bpf_map_get_next_key(fd, &key, &nextkey))
+  nextkey = mrb_calloc(mrb, 1, keylen);
+
+  if(bpf_map_get_next_key(fd, key, nextkey) == -1)
     return mrb_nil_value();
 
-  return mrb_str_new(mrb, nextkey, keylen);
+  mrb_value s = mrb_str_new(mrb, nextkey, keylen);
+  mrb_free(mrb, nextkey);
+  return s;
 }
 
 mrb_value mrb_libbpf_map_lookup(mrb_state *mrb, mrb_value self)
@@ -96,7 +130,7 @@ mrb_value mrb_libbpf_map_lookup(mrb_state *mrb, mrb_value self)
     mrb_sys_fail(mrb, "keysize unmatch");
   }
 
-  int err = bpf_map_lookup_elem(fd, &key, &value);
+  int err = bpf_map_lookup_elem(fd, key, value);
   if (err < 0) {
     // mrb_sys_fail(mrb, "no element found");
     return mrb_nil_value();
@@ -112,6 +146,7 @@ void mrb_libbpf_map_init(mrb_state *mrb, struct RClass *m)
 
   mrb_define_method(mrb, c, "next_key", mrb_libbpf_map_next_key, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, c, "lookup", mrb_libbpf_map_lookup, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, c, "__debug", mrb_libbpf_map__debug, MRB_ARGS_NONE());
   /* mrb_define_class_method(mrb, libbpf, "hi", mrb_libbpf_hi, MRB_ARGS_NONE()); */
   DONE;
 }
