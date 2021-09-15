@@ -1,14 +1,15 @@
 require 'open3'
 require 'fileutils'
+require_relative 'mrblib/libbpf/versions'
 
 unless defined? DEFAULT_LIBBPF_VERSION
-  DEFAULT_LIBBPF_VERSION = '0.5.0'
+  DEFAULT_LIBBPF_VERSION = LibBPF::LIBBPF_VERSION
 end
 
 MRuby::Gem::Specification.new('mruby-libbpf') do |spec|
   spec.license = 'MIT'
   spec.authors = 'Uchio Kondo'
-  spec.version = '0.0.1'
+  spec.version = LibBPF::VERSION
 
   def run_command env, command
     STDOUT.sync = true
@@ -20,7 +21,7 @@ MRuby::Gem::Specification.new('mruby-libbpf') do |spec|
   end
 
   def spec.get_libbpf_version
-    if self.cc.defines.flatten.find{|d| d =~ /^MRB_SECCOMP_LIBVER=([\.0-9]+)$/ }
+    if self.cc.defines.flatten.find{|d| d =~ /^MRB_LIBBPF_VERSION=([\.0-9]+)$/ }
       return $1
     else
       DEFAULT_LIBBPF_VERSION
