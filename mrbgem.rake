@@ -33,8 +33,9 @@ MRuby::Gem::Specification.new('mruby-libbpf') do |spec|
 
     def lib_dir(b); "#{b.build_dir}/vendor/libbpf"; end
     def objs_dir(b); "#{lib_dir(b)}/.objs"; end
-    def header(b); "#{lib_dir(b)}/include/libbpf.h"; end
-    def lib_a(b); libfile "#{objs_dir(b)}/lib/libbpf"; end
+    def header_dir(b); "#{objs_dir(b)}/include"; end
+    def header(b); "#{objs_dir(b)}/include/bpf/libbpf.h"; end
+    def lib_a(b); libfile "#{objs_dir(b)}/libbpf"; end
 
     task :clean do
       FileUtils.rm_rf [lib_dir(build)]
@@ -56,14 +57,14 @@ MRuby::Gem::Specification.new('mruby-libbpf') do |spec|
         e = ENV
         e['BUILD_STATIC_ONLY'] = 'y'
         e['PREFIX'] = objs_dir(build)
-        e['LIBDIR'] = ''
+        e['LIBDIR'] = 'lib'
         e['OBJDIR'] = objs_dir(build)
-        e['DESTDIR'] = File.dirname(lib_a(build))
+        e['DESTDIR'] = ''
         e['CFLAGS'] = '-g -O2 -Werror -Wall -fPIC'
         # e['LDFLAGS'] = '-lelf'
 
         run_command e, "make"
-        run_command e, "make install"
+        run_command e, "make install_headers"
       end
     end
 
@@ -74,7 +75,7 @@ MRuby::Gem::Specification.new('mruby-libbpf') do |spec|
     c_codes = Dir.glob("#{srcdir}/*.c")
     file c_codes[0] => lib_a(build)
 
-    self.cc.include_paths << File.dirname(header(build))
+    self.cc.include_paths << File.dirname(header_dir(build))
     self.linker.library_paths << File.dirname(lib_a(build))
     self.linker.libraries << 'bpf' << 'z' << 'elf'
   end
