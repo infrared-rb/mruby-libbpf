@@ -1,6 +1,9 @@
-# mruby-libbpf   [![Build Status](https://travis-ci.org/udzura/mruby-libbpf.svg?branch=master)](https://travis-ci.org/udzura/mruby-libbpf)
-Libbpf class
+# mruby-libbpf [![CI](https://github.com/infrared-rb/mruby-libbpf/actions/workflows/ci.yml/badge.svg)](https://github.com/infrared-rb/mruby-libbpf/actions/workflows/ci.yml)
+
+libbpf binding for mruby
+
 ## install by mrbgems
+
 - add conf.gem line to `build_config.rb`
 
 ```ruby
@@ -11,17 +14,15 @@ MRuby::Build.new do |conf|
     conf.gem :github => 'udzura/mruby-libbpf'
 end
 ```
-## example
-```ruby
-p Libbpf.hi
-#=> "hi!!"
-t = Libbpf.new "hello"
-p t.hello
-#=> "hello"
-p t.bye
-#=> "hello bye"
-```
+
+## Supported feature
+
+* [ ] Skelton
+* [x] BPF Maps
+* [ ] Perf buffer poller
 
 ## License
+
 under the MIT License:
+
 - see LICENSE file
