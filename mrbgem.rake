@@ -75,7 +75,7 @@ MRuby::Gem::Specification.new('mruby-libbpf') do |spec|
     c_codes = Dir.glob("#{srcdir}/*.c")
     file c_codes[0] => lib_a(build)
 
-    self.cc.include_paths << File.dirname(header_dir(build))
+    self.cc.include_paths << header_dir(build)
     self.linker.library_paths << File.dirname(lib_a(build))
     self.linker.libraries << 'bpf' << 'z' << 'elf'
   end
