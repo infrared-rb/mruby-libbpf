@@ -67,8 +67,12 @@ MRuby::Gem::Specification.new('mruby-libbpf') do |spec|
       end
     end
 
-    libmruby_a = libfile("#{build.build_dir}/lib/libmruby")
-    file libmruby_a => lib_a(build)
+    # libmruby_a = libfile("#{build.build_dir}/lib/libmruby")
+    # file libmruby_a => lib_a(build)
+
+    srcdir = File.expand_path('./src', File.dirname(__FILE__))
+    c_codes = Dir.glob("#{srcdir}/*.c")
+    file c_codes[0] => lib_a(build)
 
     self.cc.include_paths << File.dirname(header(build))
     self.linker.library_paths << File.dirname(lib_a(build))
