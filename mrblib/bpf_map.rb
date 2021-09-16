@@ -8,6 +8,10 @@ module BPF
       @key_unpacker ||= lambda {|v| v}
     end
 
+    def value_packer
+      @value_packer ||= lambda {|v| v}
+    end
+
     def value_unpacker
       @value_unpacker ||= lambda {|v| v}
     end
@@ -18,6 +22,10 @@ module BPF
 
     def key_unpacker=(blk)
       @key_unpacker = blk
+    end
+
+    def value_packer=(blk)
+      @value_packer = blk
     end
 
     def value_unpacker=(blk)
@@ -33,8 +41,17 @@ module BPF
 
     def value_type=(type)
       if type == Integer
+        self.value_packer = lambda{|v| [v].pack("I") }
         self.value_unpacker = lambda{|v| v.unpack("I")[0] }
       end
+    end
+
+    def value_pack_format=(fmt)
+      self.value_packer = lambda{|v|
+        v_ = v.is_a?(Array) ? v : [v]
+        v_.pack(fmt)
+      }
+      self.value_unpacker = lambda{|v| v.unpack(fmt) }
     end
 
     def each
@@ -70,6 +87,37 @@ module BPF
 
     def values
       to_h.values
+    end
+
+    def [](key)
+      key_ = key_packer.call(key)
+      v = lookup(key_)
+      if v
+        value_unpacker.call(v)
+      else
+        nil
+      end
+    end
+
+    def []=(key, value)
+      key_ = key_packer.call(key)
+      value_ = value_packer.call(value)
+      v = lookup(key_)
+      if v
+        value_unpacker.call(v)
+      else
+        nil
+      end
+    end
+
+    def delete(key)
+      key_ = key_packer.call(key)
+      do_delete(key_)
+      key
+    end
+
+    def clear
+      keys.each {|k| delete(k )}
     end
 
     include Enumerable
