@@ -139,6 +139,56 @@ mrb_value mrb_libbpf_map_lookup(mrb_state *mrb, mrb_value self)
   return mrb_str_new(mrb, value, vlen);
 }
 
+mrb_value mrb_libbpf_map_do_update(mrb_state *mrb, mrb_value self)
+{
+  if(DATA_PTR(self) == NULL)
+    mrb_sys_fail(mrb, "Invalidly initialized map");
+
+  int fd = ((mrb_libbpf_map_data *)DATA_PTR(self))->fd;
+  int klen = ((mrb_libbpf_map_data *)DATA_PTR(self))->key_size;
+  int vlen = ((mrb_libbpf_map_data *)DATA_PTR(self))->value_size;
+  const char *key, *value;
+  mrb_int keylen, valuelen;
+
+  mrb_get_args(mrb, "ss", &key, &keylen, &value, &valuelen);
+  if (keylen != (mrb_int)klen) {
+    mrb_sys_fail(mrb, "keysize unmatch");
+  }
+  if (valuelen != (mrb_int)vlen) {
+    mrb_sys_fail(mrb, "valuesize unmatch");
+  }
+
+  int err = bpf_map_update_elem(fd, key, value, 0);
+  if (err < 0) {
+    mrb_sys_fail(mrb, "failed to update elem");
+  }
+
+  return mrb_str_new(mrb, value, vlen);
+}
+
+mrb_value mrb_libbpf_map_do_delete(mrb_state *mrb, mrb_value self)
+{
+  if(DATA_PTR(self) == NULL)
+    mrb_sys_fail(mrb, "Invalidly initialized map");
+
+  int fd = ((mrb_libbpf_map_data *)DATA_PTR(self))->fd;
+  int klen = ((mrb_libbpf_map_data *)DATA_PTR(self))->key_size;
+  const char* key;
+  mrb_int keylen;
+
+  mrb_get_args(mrb, "s", &key, &keylen);
+  if (keylen != (mrb_int)klen) {
+    mrb_sys_fail(mrb, "keysize unmatch");
+  }
+
+  int err = bpf_map_delete_elem(fd, key);
+  if (err < 0) {
+    mrb_sys_fail(mrb, "failed to delete elem");
+  }
+
+  return mrb_str_new(mrb, key, klen);
+}
+
 void mrb_libbpf_map_init(mrb_state *mrb, struct RClass *m)
 {
   struct RClass *c = mrb_define_class_under(mrb, m, "Map", mrb->object_class);
@@ -146,6 +196,9 @@ void mrb_libbpf_map_init(mrb_state *mrb, struct RClass *m)
 
   mrb_define_method(mrb, c, "next_key", mrb_libbpf_map_next_key, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, c, "lookup", mrb_libbpf_map_lookup, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, c, "do_update", mrb_libbpf_map_do_update, MRB_ARGS_REQ(2));
+  mrb_define_method(mrb, c, "do_delete", mrb_libbpf_map_do_delete, MRB_ARGS_REQ(1));
+
   mrb_define_method(mrb, c, "__debug", mrb_libbpf_map__debug, MRB_ARGS_NONE());
   /* mrb_define_class_method(mrb, libbpf, "hi", mrb_libbpf_hi, MRB_ARGS_NONE()); */
   DONE;
